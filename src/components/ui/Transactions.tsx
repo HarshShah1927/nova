@@ -7,10 +7,15 @@ import { useMemo, useState } from 'react';
 export default function Transactions() {
   const { transactions } = useComputedStore();
   const [filter, setFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   const filtered = useMemo(() => {
-    return transactions.filter(t => t.title.toLowerCase().includes(filter.toLowerCase()) || t.category.toLowerCase().includes(filter.toLowerCase()));
-  }, [transactions, filter]);
+    return transactions.filter((t) => {
+      const matchesSearch = t.title.toLowerCase().includes(filter.toLowerCase()) || t.category.toLowerCase().includes(filter.toLowerCase());
+      const matchesType = typeFilter === 'all' || t.type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [transactions, filter, typeFilter]);
 
   return (
     <motion.div 
@@ -23,7 +28,7 @@ export default function Transactions() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>Recent Transactions</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.6rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginTop: '0.6rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Income</span>
@@ -31,6 +36,26 @@ export default function Transactions() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Expense</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginLeft: '0.5rem' }}>
+              {(['all', 'income', 'expense'] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setTypeFilter(type)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '999px',
+                    border: typeFilter === type ? '1px solid var(--accent-primary)' : '1px solid rgba(255,255,255,0.1)',
+                    background: typeFilter === type ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {type === 'all' ? 'All' : type === 'income' ? 'Income' : 'Expenses'}
+                </button>
+              ))}
             </div>
           </div>
         </div>
