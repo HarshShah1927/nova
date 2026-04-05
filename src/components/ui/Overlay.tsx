@@ -1,24 +1,32 @@
+import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import Header from './Header';
 import DashboardCards from './DashboardCards';
 import Transactions from './Transactions';
+import Insights from './Insights';
+import Calculator from './Calculator';
 import { motion, AnimatePresence } from 'framer-motion';
 import SplineGraph from '../charts/SplineGraph';
 
 export default function Overlay() {
   const { viewMode, isAdmin } = useAppStore();
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
 
   return (
     <div style={{
       position: 'relative',
       minHeight: '100vh',
       padding: '2rem 4rem',
-      pointerEvents: 'none', // Allow clicks to pass through to 3D canvas when clicking empty space
       display: 'flex',
       flexDirection: 'column',
       zIndex: 10
     }}>
-      <Header />
+      <Header
+        calculatorOpen={calculatorOpen}
+        onCalculatorToggle={() => setCalculatorOpen((open) => !open)}
+      />
+      
+      <Calculator open={calculatorOpen} onClose={() => setCalculatorOpen(false)} />
       
       <AnimatePresence mode="wait">
         {viewMode === 'dashboard' && (
@@ -31,13 +39,12 @@ export default function Overlay() {
             style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
           >
             <DashboardCards />
+            <Insights />
             
-            <div style={{ display: 'flex', gap: '2rem', flex: 1, minHeight: 0 }}>
-              {/* Transactions takes up left column */}
+            <div style={{ display: 'flex', gap: '2rem', flex: 1, minHeight: 0, flexWrap: 'wrap' }}>
               <Transactions />
               
-              {/* 2D Spline Chart instead of placeholder */}
-              <div className="glass-panel" style={{ flex: 1, padding: '24px', pointerEvents: 'auto', display: 'flex', flexDirection: 'column' }}>
+              <div className="glass-panel" style={{ flex: 1, minWidth: '320px', padding: '24px', pointerEvents: 'auto', display: 'flex', flexDirection: 'column' }}>
                 <SplineGraph />
               </div>
             </div>

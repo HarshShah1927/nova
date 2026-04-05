@@ -23,7 +23,7 @@ export default function GalaxyView() {
 
   const groupRef = useRef<THREE.Group>(null);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.001;
     }

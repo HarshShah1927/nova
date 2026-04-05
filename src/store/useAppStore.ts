@@ -15,26 +15,22 @@ export interface ChartData {
 }
 
 interface AppState {
+  role: 'viewer' | 'admin';
   isAdmin: boolean;
+  setRole: (role: 'viewer' | 'admin') => void;
   toggleRole: () => void;
-  
-  totalBalance: number;
-  totalIncome: number;
-  totalExpenses: number;
-  
+
   transactions: Transaction[];
-  portfolioData: ChartData[];
-  
-  // View states
+  addTransaction: (transaction: Transaction) => void;
+  updateTransaction: (transaction: Transaction) => void;
+
   viewMode: 'dashboard' | 'galaxy';
   setViewMode: (mode: 'dashboard' | 'galaxy') => void;
-  
-  // Intro state
+
   introComplete: boolean;
   setIntroComplete: (val: boolean) => void;
 }
 
-// Mock Data - User Mode
 const USER_TRANSACTIONS: Transaction[] = [
   { id: '1', title: 'Stripe Payout', amount: 4500, date: '2026-04-01', category: 'Freelance', type: 'income' },
   { id: '2', title: 'Apple Store', amount: -1200, date: '2026-04-02', category: 'Electronics', type: 'expense' },
@@ -51,7 +47,6 @@ const USER_PORTFOLIO: ChartData[] = [
   { name: 'Cash', value: 10 },
 ];
 
-// Mock Data - Admin Mode (Higher values, different transactions)
 const ADMIN_TRANSACTIONS: Transaction[] = [
   { id: '1', title: 'Enterprise Contract', amount: 50000, date: '2026-04-01', category: 'Enterprise', type: 'income' },
   { id: '2', title: 'Server Infrastructure', amount: -15000, date: '2026-04-02', category: 'Infrastructure', type: 'expense' },
@@ -71,42 +66,113 @@ const ADMIN_PORTFOLIO: ChartData[] = [
   { name: 'Private Equity', value: 5 },
 ];
 
-export const useAppStore = create<AppState>((set, get) => ({
-  isAdmin: false,
-  toggleRole: () => set((state) => ({ isAdmin: !state.isAdmin })),
-  
-  // Static values - will be computed by selectors
-  totalBalance: 0, // Will be overridden by selector
-  totalIncome: 0,   // Will be overridden by selector
-  totalExpenses: 0, // Will be overridden by selector
-  transactions: [], // Will be overridden by selector
-  portfolioData: [], // Will be overridden by selector
-  
-  viewMode: 'dashboard',
-  setViewMode: (mode) => set({ viewMode: mode }),
-  
-  introComplete: false,
-  setIntroComplete: (val) => set({ introComplete: val })
+// Local storage helpers
+const loadFromStorage = (key: string, defaultValue: any) => {
+  if (typeof window === 'undefined') return defaultValue; // SSR safety
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+const saveToStorage = (key: string, value: any) => {
+  if (typeof window === 'undefined') return; // SSR safety
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
+};
+
+const getDefaultTransactions = (role: 'viewer' | 'admin') => {
+  const stored = loadFromStorage('fintech_transactions', null);
+  if (stored && Array.isArray(stored)) {
+    return stored;
+  }
+  return role === 'admin' ? ADMIN_TRANSACTIONS : USER_TRANSACTIONS;
+};
+
+export const useAppStore = create<AppState>((set) => ({
+  role: loadFromStorage('fintech_role', 'viewer'),
+  isAdmin: loadFromStorage('fintech_role', 'viewer') === 'admin',
+  setRole: (role) => {
+    saveToStorage('fintech_role', role);
+    set({ role, isAdmin: role === 'admin', transactions: getDefaultTransactions(role) });
+  },
+  toggleRole: () => set((state) => {
+    const newRole = state.isAdmin ? 'viewer' : 'admin';
+    saveToStorage('fintech_role', newRole);
+    return { role: newRole, isAdmin: !state.isAdmin, transactions: getDefaultTransactions(newRole) };
+  }),
+
+  transactions: getDefaultTransactions(loadFromStorage('fintech_role', 'viewer')),
+  addTransaction: (transaction) => set((state) => {
+    const newTransactions = [transaction, ...state.transactions];
+    saveToStorage('fintech_transactions', newTransactions);
+    return { transactions: newTransactions };
+  }),
+  updateTransaction: (transaction) => set((state) => {
+    const newTransactions = state.transactions.map((item) => item.id === transaction.id ? transaction : item);
+    saveToStorage('fintech_transactions', newTransactions);
+    return { transactions: newTransactions };
+  }),
+
+  viewMode: loadFromStorage('fintech_viewMode', 'dashboard'),
+  setViewMode: (mode) => {
+    saveToStorage('fintech_viewMode', mode);
+    set({ viewMode: mode });
+  },
+
+  introComplete: loadFromStorage('fintech_introComplete', false),
+  setIntroComplete: (val) => {
+    saveToStorage('fintech_introComplete', val);
+    set({ introComplete: val });
+  }
 }));
 
-// Selectors for computed values
 export const useComputedStore = () => {
-  const isAdmin = useAppStore((state) => state.isAdmin);
-  
+  const { role, transactions } = useAppStore();
+  const isAdmin = role === 'admin';
+
+  const totalIncome = transactions.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
+  const totalExpenses = Math.abs(transactions.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0));
+  const totalBalance = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+
   return {
-    totalBalance: isAdmin 
-      ? ADMIN_TRANSACTIONS.reduce((sum, tx) => sum + tx.amount, 0)
-      : USER_TRANSACTIONS.reduce((sum, tx) => sum + tx.amount, 0),
-    
-    totalIncome: isAdmin
-      ? ADMIN_TRANSACTIONS.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0)
-      : USER_TRANSACTIONS.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0),
-    
-    totalExpenses: isAdmin
-      ? Math.abs(ADMIN_TRANSACTIONS.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0))
-      : Math.abs(USER_TRANSACTIONS.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0)),
-    
-    transactions: isAdmin ? ADMIN_TRANSACTIONS : USER_TRANSACTIONS,
-    portfolioData: isAdmin ? ADMIN_PORTFOLIO : USER_PORTFOLIO
+    role,
+    isAdmin,
+    totalBalance,
+    totalIncome,
+    totalExpenses,
+    transactions,
+    portfolioData: role === 'admin' ? ADMIN_PORTFOLIO : USER_PORTFOLIO
   };
+};
+
+// CSV export utility
+export const exportTransactionsToCSV = (transactions: Transaction[]) => {
+  const headers = ['Date', 'Title', 'Category', 'Type', 'Amount (INR)'];
+  const rows = transactions.map(tx => [
+    tx.date,
+    tx.title,
+    tx.category,
+    tx.type,
+    Math.abs(tx.amount).toString()
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `transactions_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

@@ -39,18 +39,17 @@ body {
 }
 
 body.admin-mode {
-  background-color: var(--bg-color-admin);
-  --accent-primary: var(--admin-primary);
-  --accent-secondary: var(--admin-secondary);
-  --accent-glow: var(--admin-glow);
-  /* More dramatic admin styling */
-  filter: brightness(1.1) contrast(1.05);
+  background-color: var(--bg-color);
+  --accent-primary: #0ea5e9;
+  --accent-secondary: #8b5cf6;
+  --accent-glow: rgba(14, 165, 233, 0.5);
+  filter: none;
 }
 
 body.admin-mode .glass-panel {
-  background: rgba(251, 191, 36, 0.02);
-  border: 1px solid rgba(251, 191, 36, 0.15);
-  box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.1), 0 2px 4px -1px rgba(251, 191, 36, 0.06);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Glass panel utility */

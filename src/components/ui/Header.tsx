@@ -1,10 +1,15 @@
 import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
-import { LogOut, User, Zap } from 'lucide-react';
+import { Calculator as CalculatorIcon, LogOut, User, Zap } from 'lucide-react';
 import { generateRandomEntry } from '../../utils/animations';
 
-export default function Header() {
-  const { isAdmin, toggleRole, viewMode, setViewMode } = useAppStore();
+interface HeaderProps {
+  calculatorOpen: boolean;
+  onCalculatorToggle: () => void;
+}
+
+export default function Header({ calculatorOpen, onCalculatorToggle }: HeaderProps) {
+  const { role, setRole, viewMode, setViewMode } = useAppStore();
 
   return (
     <motion.header 
@@ -30,9 +35,15 @@ export default function Header() {
         }}>
           <Zap fill="white" size={20} />
         </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '1px' }}>
-          {isAdmin ? 'NOVA' : 'NOVA'}<span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{isAdmin ? 'ENTERPRISE' : 'PORTFOLIO'}</span>
-        </h1>
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '1px', margin: 0 }}>
+            NOVA<span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{role === 'admin' ? ' ENTERPRISE' : ' PORTFOLIO'}</span>
+          </h1>
+          <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            {role === 'admin' ? 'Admin role: edit and add transactions.' : 'Viewer role: read-only financial snapshot.'}
+            <span style={{ marginLeft: '8px', opacity: 0.7 }}>💾 Data persisted</span>
+          </p>
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -51,16 +62,26 @@ export default function Header() {
           {viewMode === 'dashboard' ? 'Switch to Galaxy View' : 'Switch to Dashboard'}
         </div>
 
-        <motion.div 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={toggleRole}
-          style={{ 
-            display: 'flex', alignItems: 'center', gap: '8px', 
-            cursor: 'pointer', background: 'var(--glass-bg)', 
-            padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--glass-border)' 
+        <div
+          onClick={onCalculatorToggle}
+          style={{
+            cursor: 'pointer',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            background: calculatorOpen ? 'rgba(14, 165, 233, 0.15)' : 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            fontSize: '0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s'
           }}
         >
+          <CalculatorIcon size={16} />
+          {calculatorOpen ? 'Close Calculator' : 'Calculator'}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--glass-bg)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
           <div style={{ 
             width: '28px', height: '28px', borderRadius: '50%', 
             background: 'var(--accent-primary)', opacity: 0.8,
@@ -68,11 +89,24 @@ export default function Header() {
           }}>
             <User size={16} />
           </div>
-          <span style={{ fontSize: '0.9rem', fontWeight: 500, marginRight: '4px' }}>
-            {isAdmin ? 'Admin Mode' : 'User Mode'}
-          </span>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'viewer' | 'admin')}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'white',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="viewer">Viewer</option>
+            <option value="admin">Admin</option>
+          </select>
           <LogOut size={16} color="var(--text-secondary)" />
-        </motion.div>
+        </div>
       </div>
     </motion.header>
   );
