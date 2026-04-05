@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg-color: #030712;
+  --bg-color-admin: #1e0909; /* Deep red/gold hue for admin */
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  
+  /* Primary Theme (User) */
+  --accent-primary: #0ea5e9; /* Neon Blue */
+  --accent-secondary: #8b5cf6; /* Neon Purple */
+  --accent-glow: rgba(14, 165, 233, 0.5);
+
+  /* Admin Theme */
+  --admin-primary: #fbbf24; /* Gold */
+  --admin-secondary: #ef4444; /* Crimson */
+  --admin-glow: rgba(251, 191, 36, 0.5);
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(12px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  transition: background-color 1s cubic-bezier(0.85, 0, 0.15, 1); /* Cinematic role transition */
+  user-select: none;
+}
+
+body.admin-mode {
+  background-color: var(--bg-color-admin);
+  --accent-primary: var(--admin-primary);
+  --accent-secondary: var(--admin-secondary);
+  --accent-glow: var(--admin-glow);
+  /* More dramatic admin styling */
+  filter: brightness(1.1) contrast(1.05);
+}
+
+body.admin-mode .glass-panel {
+  background: rgba(251, 191, 36, 0.02);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.1), 0 2px 4px -1px rgba(251, 191, 36, 0.06);
+}
+
+/* Glass panel utility */
+.glass-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  /* disabled for GPU performance over WebGL: backdrop-filter: var(--glass-blur); */
+  /* disabled for GPU performance over WebGL: -webkit-backdrop-filter: var(--glass-blur); */
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+}
+
+.glow-text {
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Base button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: white;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 15px var(--accent-glow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+/* Hide scrollbar for cleaner look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
